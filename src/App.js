@@ -1,17 +1,22 @@
-import { useState } from "react";
 import "./App.css";
-import Navbar from "./components/Navbar/Navbar";
-import Sidebar from "./components/Sidebar/Sidebar";
-import Main from "./components/Main/Main";
-
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Main from "./components/Main";
+import Login from "./components/Login/Login";
+import { useState } from "react";
 function App() {
-  const [toggle, setToggle] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true); //indicates the login status
   return (
-    <div className="App">
-      <Navbar toggle={() => setToggle(!toggle)} />
-      <Sidebar toggle={toggle} />
-      <Main />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route
+            path="/"
+            element={<Login loggedin={() => setLoggedIn(true)} />}
+          ></Route>
+          <Route path="/admin" element={<Main loggedIn={loggedIn} />}></Route>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

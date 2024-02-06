@@ -1,6 +1,15 @@
 import React from "react";
-
+import { useDispatch, useSelector } from "react-redux";
+import { setClicked } from "../../redux/action";
 const Sidebar = ({ toggle }) => {
+  const dispatch = useDispatch();
+  const state = useSelector((state) => state);
+  const handleItemClick = (item) => {
+    if (!state[item]) {
+      dispatch(setClicked(item, true));
+    }
+  };
+
   return (
     <React.Fragment>
       <aside
@@ -14,8 +23,10 @@ const Sidebar = ({ toggle }) => {
           <ul class="space-y-2 font-medium">
             <li>
               <a
-                href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className={`flex items-center cursor-pointer p-2 pt-4  pb-4 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group ${
+                  state.dashboardClicked ? "bg-gray-100" : ""
+                }`}
+                onClick={() => handleItemClick("dashboardClicked")}
               >
                 <svg
                   class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -32,8 +43,10 @@ const Sidebar = ({ toggle }) => {
             </li>
             <li>
               <a
-                href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className={`flex items-center cursor-pointer p-2 pt-4  pb-4 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group ${
+                  state.schoolClicked ? "bg-gray-100" : ""
+                }`}
+                onClick={() => handleItemClick("schoolClicked")}
               >
                 <svg
                   class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
