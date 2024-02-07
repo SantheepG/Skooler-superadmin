@@ -15,24 +15,24 @@ const Login = ({ loggedin }) => {
           <Nav />
         </nav>
 
-        <div class="h-screen py-20 p-4 md:p-20 lg:p-32 ">
+        <div className="h-screen py-20 p-4 md:p-20 lg:p-32 ">
           {!forgetPwdClicked && (
-            <div class="max-w-sm mt-2 bg-white rounded-lg overflow-hidden shadow-lg mx-auto box-with-shadow">
-              <div class="p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Login</h2>
-                <p class="text-gray-700 mb-6">
+            <div className="max-w-sm mt-2 bg-white rounded-lg overflow-hidden shadow-lg mx-auto box-with-shadow">
+              <div className="p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Login</h2>
+                <p className="text-gray-700 mb-6">
                   Please Login in to your account
                 </p>
                 <form>
-                  <div class="mb-4">
+                  <div className="mb-4">
                     <label
-                      class="block text-gray-700 font-bold mb-2"
+                      className="block text-gray-700 font-bold mb-2"
                       for="username"
                     >
                       Email
                     </label>
                     <input
-                      class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      className="mt-2 bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                       name="phone_no"
                       id="phone_no"
                       type="text"
@@ -47,9 +47,9 @@ const Login = ({ loggedin }) => {
                       }
                     />
                   </div>
-                  <div class="mb-6">
+                  <div className="mb-6">
                     <label
-                      class="block text-gray-700 font-bold mb-2"
+                      className="block text-gray-700 font-bold mb-2"
                       for="password"
                     >
                       Password
@@ -58,7 +58,7 @@ const Login = ({ loggedin }) => {
                       id="password"
                       type="password"
                       placeholder="•••••••••••••••••"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                       required=""
                       value={formData.password}
                       onChange={(e) =>
@@ -69,15 +69,15 @@ const Login = ({ loggedin }) => {
                       }
                     />
                   </div>
-                  <div class="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <button
-                      class="bg-gray-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      className="bg-gray-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                       type="button"
                     >
                       Log In
                     </button>
                     <a
-                      class="inline-block align-baseline font-bold text-sm text-blue-800 hover:text-blue-800"
+                      className="inline-block align-baseline font-bold text-sm text-blue-800 hover:text-blue-800"
                       href="#"
                       onClick={() => setForgetPwdClicked(true)}
                     >
