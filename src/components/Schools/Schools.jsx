@@ -1,13 +1,35 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SchoolCard from "./SchoolCard";
 import AddSchoolView from "./AddSchoolView";
 
-const Schools = () => {
+const Schools = ({ schools, reload }) => {
   const [viewEdit, setViewedit] = useState(false);
   const [viewAdd, setViewAdd] = useState(false);
+  const [schoolsToView, setSchoolsToView] = useState([]);
+
+  useEffect(() => {
+    setSchoolsToView(schools);
+  }, [schools]);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const inputValue = event.target.value.toLowerCase();
+    if (inputValue === "") {
+      setSchoolsToView(schools);
+    } else {
+      let matchedSchools = schools.filter(
+        (item) =>
+          item.name.toLowerCase().includes(inputValue) ||
+          item.phone.includes(inputValue) ||
+          item.email.includes(inputValue)
+      );
+      setSchoolsToView(matchedSchools);
+    }
+  };
+
   return (
     <React.Fragment>
-      <div className="p-4 sm:ml-64">
+      <div className="p-4 sm:ml-64 mt-4">
         <div
           className={`${
             viewAdd || viewEdit ? "opacity-40" : ""
@@ -40,6 +62,7 @@ const Schools = () => {
                 id="table-search-users"
                 className="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Search"
+                onChange={handleSearch}
               />
             </div>
             <button
@@ -55,10 +78,17 @@ const Schools = () => {
             </button>
           </div>
           <div className="grid gap-10 pb-20 sm:grid-cols-2 lg:grid-cols-3">
-            <SchoolCard editClicked={() => setViewedit(true)} />
-            <SchoolCard />
-            <SchoolCard />
-            <SchoolCard />
+            {schoolsToView.length !== 0 ? (
+              schools.map((school) => (
+                <SchoolCard
+                  key={school.id}
+                  school={school}
+                  seditClicked={() => setViewedit(true)}
+                />
+              ))
+            ) : (
+              <div>No data available</div>
+            )}
           </div>
         </div>
 
@@ -69,7 +99,10 @@ const Schools = () => {
             aria-hidden="true"
             className={`flex fixed top-0 left-0 right-0 z-50 items-center justify-center w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full `}
           >
-            <AddSchoolView closeModal={() => setViewAdd(false)} />
+            <AddSchoolView
+              reload={reload}
+              closeModal={() => setViewAdd(false)}
+            />
           </div>
         )}
         {viewEdit && (

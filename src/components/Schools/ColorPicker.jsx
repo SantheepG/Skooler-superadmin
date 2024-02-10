@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const ColorPicker = () => {
+const ColorPicker = ({ updateClr }) => {
   const [currentColor, setCurrentColor] = useState("");
   const [iconColor, setIconColor] = useState("text-white");
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +39,10 @@ const ColorPicker = () => {
       setIconWhite();
     }
   };
+
+  useEffect(() => {
+    updateClr({ target: { value: currentColor } });
+  }, [currentColor, updateClr]);
 
   return (
     <div className="flex flex-row relative">

@@ -3,9 +3,12 @@ import Navbar from "./Navbar/Navbar";
 import Sidebar from "./Sidebar/Sidebar";
 import Dashboard from "./Dashboard/Dashboard";
 import Schools from "./Schools/Schools";
+import { FetchSchools } from "../api/SchoolAPI";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 const Main = ({ loggedIn }) => {
+  const [schools, setSchools] = useState([]);
+  const [reload, setReload] = useState(false);
   const navigate = useNavigate();
   const [toggle, setToggle] = useState(false);
   const state = useSelector((state) => state);
@@ -13,14 +16,24 @@ const Main = ({ loggedIn }) => {
   useEffect(() => {
     if (!loggedIn) {
       navigate("/");
+    } else {
+      const fetchData = async () => {
+        let response = await FetchSchools();
+        setSchools(response.data.data);
+        setReload(false);
+      };
+
+      fetchData();
     }
-  }, []);
+  }, [reload]);
 
   let componentToRender;
   if (state.dashboardClicked) {
     componentToRender = <Dashboard />;
   } else {
-    componentToRender = <Schools />;
+    componentToRender = (
+      <Schools schools={schools} reload={() => setReload(true)} />
+    );
   }
   return (
     <React.Fragment>
