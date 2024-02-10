@@ -19,4 +19,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('check', [SchoolController::class, 'index']);
+Route::get('super/fetch', [SchoolController::class, 'index']);
+Route::post('super/store', [SchoolController::class, 'store']);

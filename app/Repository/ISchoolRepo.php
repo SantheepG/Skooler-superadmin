@@ -4,5 +4,6 @@ namespace App\Repository;
 
 interface ISchoolRepo
 {
-    function all(): array;
+    public function all();
+    public function store($schoolData);
 }

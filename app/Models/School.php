@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class School extends Model
 {
     use HasFactory;
+    protected $primaryKey = "id";
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $table = 'schools';
     protected $fillable = [
+        'id',
         'name',
         'address',
         'country',
@@ -16,9 +21,11 @@ class School extends Model
         'phone',
         'email',
         'logo',
-        'clr',
+        'subscription_expiry',
+        'ui',
         'delivery',
         'pickup',
+        'admin'
 
 
     ];

@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('school', function (Blueprint $table) {
-            $table->id();
+        Schema::create('schools', function (Blueprint $table) {
+            $table->string('id')->primary();
             $table->string('name');
             $table->string('address');
             $table->string('country');
@@ -20,9 +20,11 @@ return new class extends Migration
             $table->string('phone');
             $table->string('email')->unique();
             $table->string('logo');
-            $table->json('clr');
+            $table->json('ui');
+            $table->dateTime('subscription_expiry');
             $table->boolean('delivery');
             $table->boolean('pickup');
+            $table->json('admin');
             $table->timestamps();
         });
     }
@@ -32,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('school');
+        Schema::dropIfExists('schools');
     }
 };
