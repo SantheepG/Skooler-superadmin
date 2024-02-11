@@ -23,3 +23,18 @@ export const FetchSchools = async () => {
     return error;
   }
 };
+
+export const UpdateUI = async (data) => {
+  try {
+    const response = await axios.put(
+      "http://127.0.0.1:8000/api/super/school/updateui",
+      data,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response;
+  } catch (error) {
+    return error;
+  }
+};

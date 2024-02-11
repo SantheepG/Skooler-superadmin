@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import SchoolCard from "./SchoolCard";
 import AddSchoolView from "./AddSchoolView";
-
+import EditSchoolView from "./EditSchoolView";
 const Schools = ({ schools, reload }) => {
-  const [viewEdit, setViewedit] = useState(false);
+  const [viewEdit, setViewEdit] = useState(false);
   const [viewAdd, setViewAdd] = useState(false);
   const [schoolsToView, setSchoolsToView] = useState([]);
+  const [currentSchool, setCurrentSchool] = useState({});
 
   useEffect(() => {
     setSchoolsToView(schools);
@@ -20,9 +21,11 @@ const Schools = ({ schools, reload }) => {
       let matchedSchools = schools.filter(
         (item) =>
           item.name.toLowerCase().includes(inputValue) ||
+          item.id.toLowerCase().includes(inputValue) ||
           item.phone.includes(inputValue) ||
           item.email.includes(inputValue)
       );
+
       setSchoolsToView(matchedSchools);
     }
   };
@@ -32,7 +35,7 @@ const Schools = ({ schools, reload }) => {
       <div className="p-4 sm:ml-64 mt-4">
         <div
           className={`${
-            viewAdd || viewEdit ? "opacity-40" : ""
+            viewAdd || viewEdit ? "hidden" : ""
           } p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14`}
         >
           <div className="flex mb-8 px-4 items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900">
@@ -79,19 +82,32 @@ const Schools = ({ schools, reload }) => {
           </div>
           <div className="grid gap-10 pb-20 sm:grid-cols-2 lg:grid-cols-3">
             {schoolsToView.length !== 0 ? (
-              schools.map((school) => (
+              schoolsToView.map((school) => (
                 <SchoolCard
                   key={school.id}
                   school={school}
-                  seditClicked={() => setViewedit(true)}
+                  editClicked={() => {
+                    setCurrentSchool(school);
+                    setViewEdit(true);
+                  }}
                 />
               ))
             ) : (
-              <div>No data available</div>
+              <div>No schools available</div>
             )}
           </div>
         </div>
 
+        {viewEdit && (
+          <div
+            className={`p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14`}
+          >
+            <EditSchoolView
+              school={currentSchool}
+              close={() => setViewEdit(false)}
+            />
+          </div>
+        )}
         {viewAdd && (
           <div
             id="addSchoolModal"
@@ -103,16 +119,6 @@ const Schools = ({ schools, reload }) => {
               reload={reload}
               closeModal={() => setViewAdd(false)}
             />
-          </div>
-        )}
-        {viewEdit && (
-          <div
-            id="editSchoolModal"
-            tabindex="-1"
-            aria-hidden="true"
-            className={`flex fixed top-0 left-0 right-0 z-50 items-center justify-center w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full `}
-          >
-            <SchoolCard />
           </div>
         )}
       </div>

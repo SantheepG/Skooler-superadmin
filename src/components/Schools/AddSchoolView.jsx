@@ -7,7 +7,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AddSchool } from "../../api/SchoolAPI";
 const AddSchoolView = ({ closeModal, reload }) => {
+  const fileInputRef = useRef(null);
   const [logo, setLogo] = useState(hologoLogo);
+  const MAX_WIDTH = 200;
+  const MAX_HEIGHT = 200;
   const [logoPreview, setLogoPreview] = useState(hologoLogo);
   const [enterSchoolDetailsClicked, setEnterSchoolDetailsClicked] =
     useState(true);
@@ -58,7 +61,6 @@ const AddSchoolView = ({ closeModal, reload }) => {
     profile_pic: null,
   });
 
-  const fileInputRef = useRef(null);
   const handleUpdateClick = (event) => {
     event.preventDefault();
     fileInputRef.current.click();
@@ -68,10 +70,48 @@ const AddSchoolView = ({ closeModal, reload }) => {
     event.preventDefault();
     const selectedFile = event.target.files[0];
 
-    // Update the logo state with the selected file
     setLogo(selectedFile);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    // Create a preview of the selected file
+    const image = new Image();
+    image.src = URL.createObjectURL(selectedFile);
+
+    image.onload = () => {
+      let width = image.width;
+      let height = image.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(image, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          //const blobUrl = URL.createObjectURL(blob);
+
+          setSchoolDetails((prevState) => ({
+            ...prevState,
+            logo: blob,
+          }));
+        },
+        "image/jpeg",
+        0.9
+      );
+    };
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result);
@@ -98,10 +138,11 @@ const AddSchoolView = ({ closeModal, reload }) => {
   }, [selectedDate]);
 
   const handlefirstClick = () => {
-    setSchoolDetails({
-      ...schoolDetails,
+    setSchoolDetails((prevDetails) => ({
+      ...prevDetails,
       subscription_expiry: `${selectedDateStr} ${hour}:${mins}:00`,
-    });
+    }));
+
     if (
       schoolDetails.id !== "" &&
       schoolDetails.name !== "" &&
@@ -125,11 +166,10 @@ const AddSchoolView = ({ closeModal, reload }) => {
 
   const handleSecondClick = () => {
     if (uiDetails.primary_clr !== "" && uiDetails.secondary_clr) {
-      setSchoolDetails({
-        ...schoolDetails,
+      setSchoolDetails((prevDetails) => ({
+        ...prevDetails,
         ui: JSON.stringify(uiDetails),
-        logo: logo,
-      });
+      }));
 
       setEnterUIDetailsClicked(false);
       setEnterAdminDetailsClicked(true);
@@ -171,10 +211,11 @@ const AddSchoolView = ({ closeModal, reload }) => {
       adminDetails.mobile_no !== "" &&
       adminDetails.password !== ""
     ) {
-      setSchoolDetails({
-        ...schoolDetails,
+      setSchoolDetails((prevDetails) => ({
+        ...prevDetails,
         admin: JSON.stringify(adminDetails),
-      });
+      }));
+
       setTimeout(() => {
         addSchool();
       }, 100);
@@ -192,6 +233,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
       }, 1300);
     } else {
       toast.error("Something went wrong");
+      console.log(logo);
     }
   };
   return (

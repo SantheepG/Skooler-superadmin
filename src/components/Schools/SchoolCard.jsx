@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import hologoLogo from "../assets/Hologo_logo.png";
 
 const SchoolCard = ({ school, editClicked }) => {
   const [remaining, setRemaining] = useState(0);
@@ -48,11 +49,7 @@ const SchoolCard = ({ school, editClicked }) => {
 
         <div className="my-4 flex items-center">
           <div className=" w-36 h-36">
-            <img
-              class="rounded w-36 h-36"
-              src="https://img.freepik.com/free-vector/bird-colorful-logo-gradient-vector_343694-1365.jpg?size=338&ext=jpg&ga=GA1.1.1448711260.1707224400&semt=ais"
-              alt="Extra large avatar"
-            />
+            <img class="rounded w-36 h-36" src={hologoLogo} />
           </div>
           <div className="px-2 text-xs text-gray-600">
             <div className="m-2">

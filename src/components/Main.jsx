@@ -19,8 +19,12 @@ const Main = ({ loggedIn }) => {
     } else {
       const fetchData = async () => {
         let response = await FetchSchools();
-        setSchools(response.data.data);
-        setReload(false);
+        if (response) {
+          setSchools(response.data.data);
+          setReload(false);
+        } else {
+          console.error("error occured when fetching data");
+        }
       };
 
       fetchData();
@@ -40,7 +44,7 @@ const Main = ({ loggedIn }) => {
       {loggedIn && (
         <div className="App">
           <Navbar toggle={() => setToggle(!toggle)} />
-          <Sidebar toggle={toggle} />
+          <Sidebar toggle={toggle} schoolCount={schools.length} />
           {componentToRender}
         </div>
       )}
