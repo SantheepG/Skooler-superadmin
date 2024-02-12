@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\LogoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,3 +22,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('super/fetch', [SchoolController::class, 'index']);
 Route::post('super/store', [SchoolController::class, 'store']);
+Route::get('super/getschool/{id}', [SchoolController::class, 'fetchSchool']);
+Route::get('super/checkid/{id}', [SchoolController::class, 'checkID']);
+Route::put('super/school/updateui', [SchoolController::class, 'updateUI']);
+Route::put('super/school/updatestatus', [SchoolController::class, 'updateStatus']);
+Route::put('super/school/updateexpiry', [SchoolController::class, 'updateExpiry']);
+Route::put('super/school/updateinfo', [SchoolController::class, 'updateInfo']);
+Route::put('super/school/updateadmin', [SchoolController::class, 'updateAdmin']);
+Route::put('super/school/updatelogo', [SchoolController::class, 'updateLogo']);
+
+Route::delete('super/school/delete/{id}', [SchoolController::class, 'deleteSchool']);
+
+
+
+//Logo
+Route::post('super/addlogo', [LogoController::class, 'addLogo']);
+Route::post('super/update', [LogoController::class, 'updateLogo']);
+Route::get('super/getlogo/{id}', [LogoController::class, 'getLogo']);

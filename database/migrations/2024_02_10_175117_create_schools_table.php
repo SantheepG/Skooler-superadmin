@@ -19,8 +19,9 @@ return new class extends Migration
             $table->string('currency');
             $table->string('phone');
             $table->string('email')->unique();
-            $table->string('logo');
+
             $table->json('ui');
+            $table->boolean('is_active')->default(true);
             $table->dateTime('subscription_expiry');
             $table->boolean('delivery');
             $table->boolean('pickup');

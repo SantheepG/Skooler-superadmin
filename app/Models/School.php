@@ -20,12 +20,13 @@ class School extends Model
         'currency',
         'phone',
         'email',
-        'logo',
-        'subscription_expiry',
         'ui',
+        'is_active',
+        'subscription_expiry',
         'delivery',
         'pickup',
-        'admin'
+        'admin',
+        'logo_id'
 
 
     ];
