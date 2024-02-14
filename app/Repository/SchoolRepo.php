@@ -22,7 +22,18 @@ class SchoolRepo implements ISchoolRepo
     //Fetching a particular school
     public function fetchSchool($id)
     {
-        return School::findOrFail($id);
+        $school = School::findOrFail($id);
+
+        // Checking if subscription_expiry is in the past
+        $currentDateTime = now();  // Current date & time
+
+        if ($currentDateTime > $school->subscription_expiry) {
+            // Subscription has expired, update is_active to false
+            $school->is_active = false;
+            $school->save();
+        }
+
+        return $school;
     }
 
     public function addLogo($img)

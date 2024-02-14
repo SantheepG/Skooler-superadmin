@@ -29,7 +29,6 @@ Route::put('super/school/updatestatus', [SchoolController::class, 'updateStatus'
 Route::put('super/school/updateexpiry', [SchoolController::class, 'updateExpiry']);
 Route::put('super/school/updateinfo', [SchoolController::class, 'updateInfo']);
 Route::put('super/school/updateadmin', [SchoolController::class, 'updateAdmin']);
-Route::put('super/school/updatelogo', [SchoolController::class, 'updateLogo']);
 
 Route::delete('super/school/delete/{id}', [SchoolController::class, 'deleteSchool']);
 
@@ -37,5 +36,5 @@ Route::delete('super/school/delete/{id}', [SchoolController::class, 'deleteSchoo
 
 //Logo
 Route::post('super/addlogo', [LogoController::class, 'addLogo']);
-Route::post('super/update', [LogoController::class, 'updateLogo']);
+Route::post('super/updatelogo', [LogoController::class, 'updateLogo']);
 Route::get('super/getlogo/{id}', [LogoController::class, 'getLogo']);
