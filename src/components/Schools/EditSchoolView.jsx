@@ -5,34 +5,51 @@ import "react-datepicker/dist/react-datepicker.css";
 import ColorPicker from "./ColorPicker";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { UpdateUI } from "../../api/SchoolAPI";
-const EditSchoolView = ({ school, close }) => {
+import { base_URL } from "../../api/SchoolAPI";
+import {
+  UpdateExpiry,
+  UpdateUI,
+  UpdateInfo,
+  UpdateAdmin,
+  DeleteSchool,
+  UpdateStatus,
+  UpdateLogo,
+} from "../../api/SchoolAPI";
+import DeleteView from "./DeleteView";
+const EditSchoolView = ({ school, close, reload }) => {
   const MAX_WIDTH = 200;
   const MAX_HEIGHT = 200;
   const fileInputRef = useRef(null);
-  const [logo, setLogo] = useState(hologoLogo);
-  const [logoPreview, setLogoPreview] = useState(hologoLogo);
+  const [logo, setLogo] = useState(null);
 
+  const [logoPreview, setLogoPreview] = useState("");
+  const [expiry, setExpiry] = useState("");
   const [ui, setUI] = useState([]);
   const [UIChange, setUIChange] = useState({
     primary_clr: "",
     secondary_clr: "",
   });
+
   const [admin, setAdmin] = useState({});
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedDateStr, setSelectedDateStr] = useState("");
   const [hour, setHour] = useState("");
   const [mins, setMins] = useState("");
-  const [schoolDetails, setSchoolDetails] = useState();
+  const [schoolDetails, setSchoolDetails] = useState("");
+  const [status, setStatus] = useState(true);
   //hidden components
   const [editSubscription, setEditSubscription] = useState(false);
   const [editSchool, setEditSchool] = useState(false);
   const [editUI, setEditUI] = useState(false);
   const [editAdmin, setEditAdmin] = useState(false);
-
+  const [deleteClicked, setDeleteClicked] = useState(false);
   useEffect(() => {
     setUI(JSON.parse(school.ui));
     setAdmin(JSON.parse(school.admin));
+    setExpiry(school.subscription_expiry);
+    setSchoolDetails(school);
+    setStatus(school.is_active);
+    setLogoPreview(`${base_URL}/super/getlogo/${school.logo_id}`);
   }, [school]);
   const handleHourChange = (e) => {
     const inputHour = parseInt(e.target.value, 10);
@@ -58,62 +75,101 @@ const EditSchoolView = ({ school, close }) => {
 
   const handleUpdateClick = (event) => {
     event.preventDefault();
-    fileInputRef.current.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     event.preventDefault();
     const selectedFile = event.target.files[0];
-
     setLogo(selectedFile);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    // Create a FileReader to read the selected file
+    const reader = new FileReader();
 
-    const image = new Image();
-    image.src = URL.createObjectURL(selectedFile);
+    reader.onloadend = () => {
+      // Set the preview URL
 
-    image.onload = () => {
-      let width = image.width;
-      let height = image.height;
+      // Create an Image element to get the natural dimensions of the image
+      const image = new Image();
+      image.src = reader.result;
 
-      if (width > height) {
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width = image.width;
+        let height = image.height;
+        const MAX_WIDTH = 300; // Set your desired maximum width
+        const MAX_HEIGHT = 300; // Set your desired maximum height
+
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
         }
-      } else {
+
         if (height > MAX_HEIGHT) {
           width *= MAX_HEIGHT / height;
           height = MAX_HEIGHT;
         }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        // Append the canvas to the DOM or use the canvas to generate a data URL
+        // Example: document.body.appendChild(canvas);
+        // Or: const canvasDataURL = canvas.toDataURL("image/jpeg");
+      };
+    };
+
+    if (selectedFile) {
+      reader.readAsDataURL(selectedFile); // Read the file as a data URL
+    }
+    try {
+      const formData = new FormData();
+      //formData.append("_method", "PUT");
+      formData.append("id", String(school.logo_id));
+      formData.append("logo", event.target.files[0]);
+      const response = await UpdateLogo(formData);
+
+      if (response.status === 200) {
+        toast.success("Updated");
+
+        setTimeout(() => {
+          reload();
+          setLogoPreview(reader.result);
+        }, 500);
+      } else {
+        toast.error("Something went wrong");
       }
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
 
-      canvas.width = width;
-      canvas.height = height;
+  const handleUpload = async () => {
+    if (!logo) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("id", school.id);
+      formData.append("logo", logo);
+      const response = UpdateLogo(formData);
 
-      ctx.drawImage(image, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          //const blobUrl = URL.createObjectURL(blob);
-
-          setSchoolDetails((prevState) => ({
-            ...prevState,
-            logo: blob,
-          }));
-        },
-        "image/jpeg",
-        0.9
-      );
-    };
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setLogoPreview(reader.result);
-    };
-    reader.readAsDataURL(selectedFile);
-
-    console.log("Selected file:", selectedFile);
+      if (response.status === 200) {
+        toast.success("Updated");
+        setTimeout(() => {
+          reload();
+        }, 500);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
   };
 
   const updateUI = async () => {
@@ -122,17 +178,153 @@ const EditSchoolView = ({ school, close }) => {
         id: school.id,
         ui: JSON.stringify(UIChange),
       });
-      if (response) {
+      if (response.status === 200) {
         toast.success("Updated");
         setTimeout(() => {
           setUI(UIChange);
           setEditUI(false);
+          reload();
         }, 500);
       } else {
         toast.error("Something went wrong");
       }
     } else {
       toast.error("Required fields are empty");
+    }
+  };
+
+  useEffect(() => {
+    const formattedDate = (date) => {
+      if (!date || isNaN(date.getTime())) {
+        return "";
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    setSelectedDateStr(formattedDate(selectedDate));
+  }, [selectedDate]);
+
+  const updateExpiry = async () => {
+    if (selectedDateStr !== "" && mins !== "" && hour !== "") {
+      const response = await UpdateExpiry({
+        id: school.id,
+        subscription_expiry: `${selectedDateStr} ${hour}:${mins}:00`,
+      });
+      if (response.status === 200) {
+        toast.success("Updated");
+        setTimeout(() => {
+          setExpiry(`${selectedDateStr} ${hour}:${mins}:00`);
+          setEditSubscription(false);
+          reload();
+        }, 500);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } else {
+      toast.error("Required fields are empty");
+    }
+  };
+
+  const updateInfo = async () => {
+    if (
+      schoolDetails.name !== "" &&
+      schoolDetails.address !== "" &&
+      schoolDetails.email !== "" &&
+      schoolDetails.phone !== "" &&
+      schoolDetails.country !== "" &&
+      schoolDetails.currency !== ""
+    ) {
+      const response = await UpdateInfo({
+        id: school.id,
+        name: schoolDetails.name,
+        address: schoolDetails.address,
+        email: schoolDetails.email,
+        phone: schoolDetails.phone,
+        country: schoolDetails.country,
+        currency: schoolDetails.currency,
+        pickup: schoolDetails.pickup,
+        delivery: schoolDetails.delivery,
+      });
+      if (response.status === 200) {
+        toast.success("Updated");
+        setTimeout(() => {
+          setEditSchool(false);
+          reload();
+        }, 500);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } else {
+      toast.error("Required fields are empty");
+    }
+  };
+
+  const updateAdmin = async () => {
+    if (
+      admin.first_name !== "" &&
+      admin.last_name !== "" &&
+      admin.email !== "" &&
+      admin.mobile_no !== "" &&
+      admin.password !== ""
+    ) {
+      const response = await UpdateAdmin({
+        id: school.id,
+        admin: JSON.stringify(admin),
+      });
+      if (response.status === 200) {
+        toast.success("Updated");
+        setTimeout(() => {
+          setEditAdmin(false);
+          reload();
+        }, 500);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } else {
+      toast.error("Required fields are empty");
+    }
+  };
+
+  const deleteSchool = async () => {
+    try {
+      const response = await DeleteSchool(school.id);
+      if (response.status === 200) {
+        toast.success("Deleted");
+        setTimeout(() => {
+          reload();
+          close();
+        }, 1000);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const updateStatus = async (e) => {
+    try {
+      const response = await UpdateStatus({
+        id: school.id,
+        is_active: e.target.checked,
+      });
+      if (response.status === 200) {
+        toast.success("status changed");
+        setStatus(!status);
+        setTimeout(() => {
+          reload();
+        }, 1000);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
     }
   };
   return (
@@ -147,7 +339,10 @@ const EditSchoolView = ({ school, close }) => {
                   href="#"
                   title=""
                   class="cursor-pointer text-gray-400 hover:text-gray-900"
-                  onClick={close}
+                  onClick={() => {
+                    close();
+                    reload();
+                  }}
                 >
                   <svg
                     class="block h-5 w-5 align-middle"
@@ -189,17 +384,49 @@ const EditSchoolView = ({ school, close }) => {
             </ul>
           </nav>
 
-          <p class="mt-5 text-lg font-bold leading-7 text-gray-800">
-            Edit school
-          </p>
+          <div className="flex w-full items-center">
+            <div className="flex-grow">
+              <p class="mt-5 text-lg font-bold leading-7 text-gray-800">
+                Edit school
+              </p>
+            </div>
+
+            <div className="pt-4 flex">
+              <div className="flex">
+                {status ? (
+                  <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                    <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                    Active
+                  </span>
+                ) : (
+                  <span class="inline-flex items-center bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-orange-900 dark:text-orange-300">
+                    <span class="w-2 h-2 me-1 bg-orange-500 rounded-full"></span>
+                    Inactive
+                  </span>
+                )}
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer ml-6">
+                <input
+                  id="active-status"
+                  type="checkbox"
+                  checked={status}
+                  value={status}
+                  class="sr-only peer"
+                  onChange={(e) => {
+                    updateStatus(e);
+                  }}
+                />
+                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
         </div>
         <div class="col-span-8 overflow-hidden rounded-xl sm:px-8 ">
           <hr class="mt-4 mb-8" />
           <p class="py-2 text-xl font-semibold">Subscription</p>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <p class="text-gray-600">
-              Subscription expires on{" "}
-              <strong>{school.subscription_expiry}</strong>
+              Subscription expires on <strong>{expiry}</strong>
             </p>
             <button
               class="inline-flex text-sm font-semibold text-blue-600 underline decoration-2"
@@ -266,6 +493,7 @@ const EditSchoolView = ({ school, close }) => {
                 <button
                   type="button"
                   class="text-white h-10 mt-7 ml-6 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-1 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                  onClick={updateExpiry}
                 >
                   Update
                 </button>
@@ -277,7 +505,7 @@ const EditSchoolView = ({ school, close }) => {
           <div className="text-sm ">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Name : <strong>{school.name}</strong>
+                Name : <strong>{schoolDetails.name}</strong>
               </p>
               <button
                 class="inline-flex text-sm font-semibold text-blue-600 underline decoration-2"
@@ -293,27 +521,38 @@ const EditSchoolView = ({ school, close }) => {
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Email : <strong>{school.email}</strong>
+                Email : <strong>{schoolDetails.email}</strong>
               </p>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Phone : <strong>{school.phone}</strong>
+                Phone : <strong>{schoolDetails.phone}</strong>
               </p>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Address : <strong>{school.address}</strong>
+                Address : <strong>{schoolDetails.address}</strong>
               </p>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Country : <strong>{school.country}</strong>
+                Country : <strong>{schoolDetails.country}</strong>
               </p>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
-                Currency : <strong>{school.currency}</strong>
+                Currency : <strong>{schoolDetails.currency}</strong>
+              </p>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-gray-600">
+                Pickup : <strong>{schoolDetails.pickup ? "Yes" : "No"}</strong>
+              </p>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-gray-600">
+                Delivery :{" "}
+                <strong>{schoolDetails.delivery ? "Yes" : "No"}</strong>
               </p>
             </div>
           </div>
@@ -335,7 +574,13 @@ const EditSchoolView = ({ school, close }) => {
                       id="name"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       required=""
-                      value={school.name}
+                      value={schoolDetails.name}
+                      onChange={(e) => {
+                        setSchoolDetails({
+                          ...schoolDetails,
+                          name: e.target.value,
+                        });
+                      }}
                     />
                   </div>
                   <div className="mb-2">
@@ -352,7 +597,13 @@ const EditSchoolView = ({ school, close }) => {
                       id="name"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       required=""
-                      value={school.email}
+                      value={schoolDetails.email}
+                      onChange={(e) => {
+                        setSchoolDetails({
+                          ...schoolDetails,
+                          email: e.target.value,
+                        });
+                      }}
                     />
                   </div>
                   <div className="mb-2">
@@ -370,7 +621,13 @@ const EditSchoolView = ({ school, close }) => {
                       id="name"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       required=""
-                      value={school.address}
+                      value={schoolDetails.address}
+                      onChange={(e) => {
+                        setSchoolDetails({
+                          ...schoolDetails,
+                          address: e.target.value,
+                        });
+                      }}
                     />
                   </div>
                   <div className="mb-2 flex">
@@ -388,7 +645,13 @@ const EditSchoolView = ({ school, close }) => {
                         id="name"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         required=""
-                        value={school.country}
+                        value={schoolDetails.country}
+                        onChange={(e) => {
+                          setSchoolDetails({
+                            ...schoolDetails,
+                            country: e.target.value,
+                          });
+                        }}
                       />
                     </div>
                     <div className="w-1/3 mx-4">
@@ -405,7 +668,13 @@ const EditSchoolView = ({ school, close }) => {
                         id="name"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         required=""
-                        value={school.currency}
+                        value={schoolDetails.currency}
+                        onChange={(e) => {
+                          setSchoolDetails({
+                            ...schoolDetails,
+                            currency: e.target.value,
+                          });
+                        }}
                       />
                     </div>
                   </div>
@@ -420,12 +689,13 @@ const EditSchoolView = ({ school, close }) => {
                       <span className="required text-red-500"> *</span>
                     </label>
                     <input
+                      disabled
                       type="text"
                       name="name"
                       id="name"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       required=""
-                      value={school.id}
+                      value={schoolDetails.id}
                     />
                   </div>
                   <div className="mb-2">
@@ -442,7 +712,13 @@ const EditSchoolView = ({ school, close }) => {
                       id="name"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       required=""
-                      value={school.phone}
+                      value={schoolDetails.phone}
+                      onChange={(e) => {
+                        setSchoolDetails({
+                          ...schoolDetails,
+                          phone: e.target.value,
+                        });
+                      }}
                     />
                   </div>
 
@@ -451,9 +727,15 @@ const EditSchoolView = ({ school, close }) => {
                       <input
                         id="delivery"
                         type="checkbox"
-                        checked={school.delivery}
-                        value={school.delivery}
+                        checked={schoolDetails.delivery}
+                        value={schoolDetails.delivery}
                         class="sr-only peer"
+                        onChange={(e) => {
+                          setSchoolDetails({
+                            ...schoolDetails,
+                            delivery: e.target.checked,
+                          });
+                        }}
                       />
                       <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                       <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
@@ -464,19 +746,34 @@ const EditSchoolView = ({ school, close }) => {
                       <input
                         id="pickup"
                         type="checkbox"
-                        checked={school.pickup}
-                        value={school.pickup}
+                        checked={schoolDetails.pickup}
+                        value={schoolDetails.pickup}
                         class="sr-only peer"
+                        onChange={(e) => {
+                          setSchoolDetails({
+                            ...schoolDetails,
+                            pickup: e.target.checked,
+                          });
+                        }}
                       />
                       <div
                         className={`${
-                          school.pickup ? "" : ""
+                          schoolDetails.pickup ? "" : ""
                         } w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600`}
                       ></div>
                       <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
                         pick-up
                       </span>
                     </label>
+                  </div>
+                  <div>
+                    <button
+                      className="ml-6 border my-16 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
+                      onClick={updateInfo}
+                    >
+                      update
+                    </button>
+                    <input type="button" onChange={handleFileChange} />
                   </div>
                 </div>
               </div>
@@ -514,7 +811,7 @@ const EditSchoolView = ({ school, close }) => {
             </div>
           </div>
           {editUI && (
-            <form action="#" className="w-2/3 my-8">
+            <div className="w-2/3 my-8">
               <div className="flex justify-center ">
                 <div className="w-1/2">
                   <div className="mb-6">
@@ -553,6 +850,14 @@ const EditSchoolView = ({ school, close }) => {
                       }
                     />
                   </div>
+                  <div>
+                    <button
+                      className=" border px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
+                      onClick={updateUI}
+                    >
+                      update
+                    </button>
+                  </div>
                 </div>
                 <div className="w-1/2 m-4 ">
                   <div className="flex">
@@ -576,15 +881,6 @@ const EditSchoolView = ({ school, close }) => {
                           onChange={handleFileChange}
                         />
                       </div>
-                      <div>
-                        <button
-                          className="ml-6 border my-16 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
-                          onClick={updateUI}
-                        >
-                          update
-                        </button>
-                        <input type="button" onChange={handleFileChange} />
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -595,7 +891,7 @@ const EditSchoolView = ({ school, close }) => {
 
               <div class="mb-4"></div>
               <div class="ml-56 items-center space-y-4 sm:flex sm:space-y-0 sm:space-x-4"></div>
-            </form>
+            </div>
           )}
 
           <hr class="mt-4 mb-8" />
@@ -629,6 +925,139 @@ const EditSchoolView = ({ school, close }) => {
               </p>
             </div>
           </div>
+          {editAdmin && (
+            <div className="w-2/3 my-8">
+              <div className="flex justify-center my-4">
+                <div className="w-1/2">
+                  <div className="mb-2">
+                    <label
+                      for="name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      First name
+                      <span className="required text-red-500"> *</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      required=""
+                      value={admin.first_name}
+                      onChange={(e) =>
+                        setAdmin({
+                          ...admin,
+                          first_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label
+                      for="name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Email
+                      <span className="required text-red-500"> *</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="name"
+                      id="name"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      required=""
+                      value={admin.email}
+                      onChange={(e) =>
+                        setAdmin({
+                          ...admin,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label
+                      for="name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Password
+                      <span className="required text-red-500"> *</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="name"
+                      id="name"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      required=""
+                      value={admin.password}
+                      onChange={(e) =>
+                        setAdmin({
+                          ...admin,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="w-1/2 mx-2 ">
+                  <div className="mb-2">
+                    <label
+                      for="name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Last name
+                      <span className="required text-red-500"> *</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      required=""
+                      value={admin.last_name}
+                      onChange={(e) =>
+                        setAdmin({
+                          ...admin,
+                          last_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label
+                      for="name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Phone number
+                      <span className="required text-red-500"> *</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      required=""
+                      value={admin.mobile_no}
+                      onChange={(e) =>
+                        setAdmin({
+                          ...admin,
+                          mobile_no: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <button
+                      className="ml-6 border my-8 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
+                      onClick={updateAdmin}
+                    >
+                      update
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <hr class="mt-4 mb-8" />
 
           <div class="mb-10 text-sm ">
@@ -653,10 +1082,21 @@ const EditSchoolView = ({ school, close }) => {
               need to get access to your data. This will completely wipe your
               data. There is no way to access your account after this action.
             </p>
-            <button class="ml-auto text-sm font-semibold text-rose-600 underline decoration-2">
+            <button
+              class="ml-auto text-sm font-semibold text-rose-600 underline decoration-2"
+              onClick={() => setDeleteClicked(true)}
+            >
               Continue with deletion
             </button>
           </div>
+          {deleteClicked && (
+            <DeleteView
+              cancel={() => {
+                setDeleteClicked(false);
+              }}
+              deleteSchool={deleteSchool}
+            />
+          )}
         </div>
       </div>
     </React.Fragment>

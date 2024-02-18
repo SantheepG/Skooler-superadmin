@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import ColorPicker from "./ColorPicker";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AddSchool } from "../../api/SchoolAPI";
+import { AddLogo, AddSchool } from "../../api/SchoolAPI";
 const AddSchoolView = ({ closeModal, reload }) => {
   const fileInputRef = useRef(null);
   const [logo, setLogo] = useState(hologoLogo);
@@ -30,11 +30,12 @@ const AddSchoolView = ({ closeModal, reload }) => {
     country: "",
     currency: "",
     subscription_expiry: "",
-    logo: "",
+
     delivery: false,
     pickup: false,
     admin: "",
     ui: "",
+    logo_id: "",
   });
 
   const [uiDetails, setUiDetails] = useState({
@@ -66,7 +67,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     event.preventDefault();
     const selectedFile = event.target.files[0];
 
@@ -77,48 +78,60 @@ const AddSchoolView = ({ closeModal, reload }) => {
     const image = new Image();
     image.src = URL.createObjectURL(selectedFile);
 
-    image.onload = () => {
-      let width = image.width;
-      let height = image.height;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Set the preview URL
 
-      if (width > height) {
+      // Create an Image element to get the natural dimensions of the image
+      const image = new Image();
+      image.src = reader.result;
+
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width = image.width;
+        let height = image.height;
+        const MAX_WIDTH = 300; // Set your desired maximum width
+        const MAX_HEIGHT = 300; // Set your desired maximum height
+
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
         }
-      } else {
+
         if (height > MAX_HEIGHT) {
           width *= MAX_HEIGHT / height;
           height = MAX_HEIGHT;
         }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        // Append the canvas to the DOM or use the canvas to generate a data URL
+        // Example: document.body.appendChild(canvas);
+        // Or: const canvasDataURL = canvas.toDataURL("image/jpeg");
+      };
+    };
+    if (selectedFile) {
+      reader.readAsDataURL(selectedFile); // Read the file as a data URL
+    }
+    try {
+      const formData = new FormData();
+      formData.append("_method", "POST");
+      formData.append("logo", event.target.files[0]);
+      const response = await AddLogo(formData);
+      if (response.status === 201) {
+        setSchoolDetails({ ...schoolDetails, logo_id: response.data.logo_id });
+        setLogoPreview(reader.result);
+      } else {
+        toast.error("Something went wrong");
       }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      ctx.drawImage(image, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          //const blobUrl = URL.createObjectURL(blob);
-
-          setSchoolDetails((prevState) => ({
-            ...prevState,
-            logo: blob,
-          }));
-        },
-        "image/jpeg",
-        0.9
-      );
-    };
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setLogoPreview(reader.result);
-    };
-    reader.readAsDataURL(selectedFile);
-
-    console.log("Selected file:", selectedFile);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
   };
 
   useEffect(() => {
@@ -218,7 +231,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
 
       setTimeout(() => {
         addSchool();
-      }, 100);
+      }, 500);
     } else {
       toast.error("Required fields are empty");
     }
@@ -680,7 +693,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
               </form>
             )}
             {enterAdminDetailsClicked && (
-              <form action="#">
+              <div>
                 <h5 className="text-gray-500">Master admin details</h5>
                 <hr class="border-gray-300 mb-4 mt-2" />
                 <div className="flex justify-center mb-6">
@@ -830,7 +843,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
                     Add
                   </button>
                 </div>
-              </form>
+              </div>
             )}
           </div>
         </div>

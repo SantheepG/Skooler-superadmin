@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import hologoLogo from "../assets/Hologo_logo.png";
-const Navbar = ({ toggle }) => {
+import { useNavigate } from "react-router-dom";
+const Navbar = ({ toggle, email }) => {
   const [viewDropdown, setViewDropdown] = useState(false);
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
   return (
     <React.Fragment>
       <nav className="fixed shadow-md top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 px-16">
@@ -62,29 +68,24 @@ const Navbar = ({ toggle }) => {
                 </div>
                 {viewDropdown && (
                   <div
-                    className="z-50 absolute my-4 mt-48 -ml-40 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
+                    className="z-50 absolute -ml-32 mt-32 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
                     id="dropdown-user"
                   >
-                    <div className="px-4 py-3" role="none">
-                      <p
-                        className="text-sm text-gray-900 dark:text-white"
-                        role="none"
-                      >
-                        Neil Sims
-                      </p>
-                      <p
-                        className="text-sm font-medium text-gray-900 truncate dark:text-gray-300"
-                        role="none"
-                      >
-                        neil.sims@dfdf.com
-                      </p>
-                    </div>
                     <ul className="py-1" role="none">
+                      <div className="px-4 py-3" role="none">
+                        <p
+                          className="text-sm font-medium text-gray-900 truncate dark:text-gray-300"
+                          role="none"
+                        >
+                          {email}
+                        </p>
+                      </div>
                       <li>
                         <a
                           href="#"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                           role="menuitem"
+                          onClick={handleLogout}
                         >
                           Log out
                         </a>

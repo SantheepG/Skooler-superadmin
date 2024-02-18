@@ -6,29 +6,33 @@ import Schools from "./Schools/Schools";
 import { FetchSchools } from "../api/SchoolAPI";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-const Main = ({ loggedIn }) => {
+const Main = ({ logout }) => {
   const [schools, setSchools] = useState([]);
   const [reload, setReload] = useState(false);
   const navigate = useNavigate();
   const [toggle, setToggle] = useState(false);
   const state = useSelector((state) => state);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    if (!loggedIn) {
-      navigate("/");
-    } else {
-      const fetchData = async () => {
+    const fetchData = async () => {
+      const data = localStorage.getItem("email");
+      console.log(data);
+      if (!data) {
+        navigate("/");
+      } else {
+        setEmail(data);
         let response = await FetchSchools();
-        if (response) {
-          setSchools(response.data.data);
+        if (response.status === 200) {
+          setSchools(response.data.schools);
           setReload(false);
         } else {
-          console.error("error occured when fetching data");
+          console.error("error occurred when fetching data");
         }
-      };
-
-      fetchData();
-    }
+      }
+    };
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reload]);
 
   let componentToRender;
@@ -41,9 +45,9 @@ const Main = ({ loggedIn }) => {
   }
   return (
     <React.Fragment>
-      {loggedIn && (
+      {email !== "" && (
         <div className="App">
-          <Navbar toggle={() => setToggle(!toggle)} />
+          <Navbar toggle={() => setToggle(!toggle)} email={email} />
           <Sidebar toggle={toggle} schoolCount={schools.length} />
           {componentToRender}
         </div>

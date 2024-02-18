@@ -104,6 +104,7 @@ const Schools = ({ schools, reload }) => {
           >
             <EditSchoolView
               school={currentSchool}
+              reload={reload}
               close={() => setViewEdit(false)}
             />
           </div>

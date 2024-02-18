@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import hologoLogo from "../assets/Hologo_logo.png";
-
+import { base_URL } from "../../api/SchoolAPI";
 const SchoolCard = ({ school, editClicked }) => {
   const [remaining, setRemaining] = useState(0);
+  const [logo, setLogo] = useState("");
   const [progressLength, setProgressLength] = useState(0);
 
   useEffect(() => {
     const createdDate = new Date(school.createdAt);
     const currentDate = new Date();
     const expiryDate = new Date(school.subscription_expiry);
-
+    setLogo(`${base_URL}/super/getlogo/${school.logo_id}`);
     if (isNaN(currentDate) || isNaN(expiryDate)) {
       console.error("Invalid date");
       return;
@@ -27,7 +28,6 @@ const SchoolCard = ({ school, editClicked }) => {
       maxWidth
     );
     setProgressLength(progressBarWidth);
-    console.log(progressLength);
   }, [school]);
 
   useEffect(() => {}, [school]);
@@ -49,7 +49,7 @@ const SchoolCard = ({ school, editClicked }) => {
 
         <div className="my-4 flex items-center">
           <div className=" w-36 h-36">
-            <img class="rounded w-36 h-36" src={hologoLogo} />
+            <img class="rounded w-36 h-36" src={logo} />
           </div>
           <div className="px-2 text-xs text-gray-600">
             <div className="m-2">
@@ -95,11 +95,32 @@ const SchoolCard = ({ school, editClicked }) => {
               className={`h-full bg-blue-500`}
             ></div>
           </div>
-          {remaining < 5 ? (
-            <p className="text-sm text-red-500">{remaining} days remaining</p>
-          ) : (
-            <p className="text-sm text-blue-500">{remaining} days remaining</p>
-          )}
+          <div className="flex w-full mt-2">
+            <div className="flex-grow">
+              {remaining < 5 ? (
+                <p className="text-sm text-red-500">
+                  {remaining} days remaining
+                </p>
+              ) : (
+                <p className="text-sm text-blue-500">
+                  {remaining} days remaining
+                </p>
+              )}
+            </div>
+            <div className="flex">
+              {school.is_active ? (
+                <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                  <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                  Active
+                </span>
+              ) : (
+                <span class="inline-flex items-center bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-orange-900 dark:text-orange-300">
+                  <span class="w-2 h-2 me-1 bg-orange-500 rounded-full"></span>
+                  Inactive
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </React.Fragment>
