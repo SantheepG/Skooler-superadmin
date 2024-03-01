@@ -21,7 +21,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('super/fetch', [SchoolController::class, 'index']);
-Route::post('super/store', [SchoolController::class, 'store']);
+Route::post('super/store', [SchoolController::class, 'addSchool']);
+Route::post('super/checkid/{id}', [SchoolController::class, 'checkSchoolId']);
+
 Route::get('super/getschool/{id}', [SchoolController::class, 'fetchSchool']);
 Route::get('super/checkid/{id}', [SchoolController::class, 'checkID']);
 Route::put('super/school/updateui', [SchoolController::class, 'updateUI']);
@@ -35,6 +37,6 @@ Route::delete('super/school/delete/{id}', [SchoolController::class, 'deleteSchoo
 
 
 //Logo
-Route::post('super/addlogo', [LogoController::class, 'addLogo']);
-Route::post('super/updatelogo', [LogoController::class, 'updateLogo']);
+Route::post('super/addlogo', [SchoolController::class, 'addSchoolLogo']);
+Route::post('super/updatelogo', [SchoolController::class, 'updateSchoolLogo']);
 Route::get('super/getlogo/{id}', [LogoController::class, 'getLogo']);

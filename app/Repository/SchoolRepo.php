@@ -4,6 +4,8 @@ namespace App\Repository;
 
 use App\Models\School;
 use App\Models\Sample;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SchoolRepo implements ISchoolRepo
 {
@@ -16,9 +18,15 @@ class SchoolRepo implements ISchoolRepo
     // Storing a new school
     public function store($schoolData)
     {
-        return School::create($schoolData);
+        $school = School::create($schoolData);
+        return  $school ? $school : false;
     }
 
+    public function CheckSchoolID($id)
+    {
+        $schoolCheck = School::where('id', $id)->first();
+        return $schoolCheck == null ? true : false;
+    }
     //Fetching a particular school
     public function fetchSchool($id)
     {
@@ -34,6 +42,41 @@ class SchoolRepo implements ISchoolRepo
         }
 
         return $school;
+    }
+
+    public function AddSchoolLogo(Request $request)
+    {
+        $path = $request->file('logo')->store(
+            'public/logo',
+            's3'
+        );
+        Storage::disk('s3')->setVisibility($path, 'public');
+
+        if ($path) {
+            return $path;
+        } else {
+            return false;
+        }
+    }
+    public function UpdateSchoolLogo(Request $request)
+    {
+        $school = School::find($request->input('id'));
+        if ($school->logo) {
+            Storage::disk('s3')->delete($school->logo);
+        }
+        $path = $request->file('logo')->store(
+            'public/logo',
+            's3'
+        );
+
+        Storage::disk('s3')->setVisibility($path, 'public');
+        if ($path) {
+            $school->logo = $path;
+            $school->save();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function addLogo($img)

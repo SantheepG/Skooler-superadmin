@@ -26,7 +26,7 @@ class School extends Model
         'delivery',
         'pickup',
         'admin',
-        'logo_id'
+        'logo'
 
 
     ];

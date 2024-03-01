@@ -18,14 +18,14 @@ return new class extends Migration
             $table->string('country');
             $table->string('currency');
             $table->string('phone');
-            $table->string('email')->unique();
-
+            $table->string('email');
             $table->json('ui');
             $table->boolean('is_active')->default(true);
             $table->dateTime('subscription_expiry');
             $table->boolean('delivery');
             $table->boolean('pickup');
             $table->json('admin');
+            $table->string('logo');
             $table->timestamps();
         });
     }

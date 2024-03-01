@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Repository\ISchoolRepo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Sample;
 
 class SchoolController extends Controller
@@ -27,10 +26,26 @@ class SchoolController extends Controller
         ], 200);
     }
 
-    public function store(Request $request)
+    public function checkSchoolId($id)
+    {
+        $response = $this->schoolRepo->CheckSchoolID($id);
+        if ($response) {
+            return response()->json([
+                'available' => true,
+                'status' => 200
+            ], 201);
+        } else {
+            return response()->json([
+                'available' => false,
+                'status' => 200
+            ], 200);
+        }
+    }
+    public function addSchool(Request $request)
     {
         try {
-            $request->validate([
+
+            $validator = Validator::make($request->all(), [
                 'id' => 'required|unique:schools',
                 'name' => 'required|string',
                 'address' => 'required|string',
@@ -39,45 +54,34 @@ class SchoolController extends Controller
                 'phone' => 'required|string',
                 'email' => 'required|email',
                 'ui' => 'required|json',
+                'is_active' => 'boolean',
                 'subscription_expiry' => 'required|date',
                 'delivery' => 'required|boolean',
                 'pickup' => 'required|boolean',
                 'admin' => 'required|json',
-                'logo_id' => 'nullable|exists:logos,id'
+                'logo' => 'required|string',
             ]);
-        } catch (ValidationException $e) {
-            return response()->json(['errors' => $e->validator->errors()], 422);
-        }
-
-        $schoolData = [
-            'id' => $request->input('id'),
-            'name' => $request->input('name'),
-            'address' => $request->input('address'),
-            'country'  => $request->input('country'),
-            'currency' => $request->input('currency'),
-            'phone'  => $request->input('phone'),
-            'email' => $request->input('email'),
-            //'logo'  => $logoPath,
-            'subscription_expiry' => $request->input('subscription_expiry'),
-            'ui'  => $request->input('ui'),
-            'is_active' => true,
-            'delivery' => $request->input('delivery'),
-            'pickup' => $request->input('pickup'),
-            'admin'  => $request->input('admin'),
-            'logo_id' => $request->input('logo_id')
-        ];
-
-        $createdSchool = $this->schoolRepo->store($schoolData);
-        if (!$createdSchool) {
-            return response()->json(['errors' => "An error occurred while creating the school."], 403);
-        } else {
-            return response()->json([
-                'data' => $createdSchool,
-                'status' => 201
-            ], 201);
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 422);
+            } else {
+                $validatedData = $validator->validated();
+                $response = $this->schoolRepo->store($validatedData);
+                if ($response) {
+                    return response()->json([
+                        'message' => 'school created',
+                        'school' => $response,
+                        'status' => 201
+                    ], 201);
+                } else {
+                    return response()->json([
+                        "message" => "Error adding school",
+                    ], 500);
+                }
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error' . $e->getMessage()], 500);
         }
     }
-
     public function fetchSchool($id)
     {
         $school = $this->schoolRepo->fetchSchool($id);
@@ -88,6 +92,61 @@ class SchoolController extends Controller
             ], 200);
         } else {
             return response()->json(["error" => "No School Found"], 404);
+        }
+    }
+
+    public function addSchoolLogo(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'logo' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 422);
+            } else {
+
+                $response = $this->schoolRepo->AddSchoolLogo($request);
+                if ($response) {
+                    return response()->json([
+                        'path' => $response,
+                        'message' => 'success',
+                        'status' => 201
+                    ], 201);
+                } else {
+                    return response()->json([
+                        "message" => "Error adding logo",
+                    ], 500);
+                }
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error' . $e->getMessage()], 500);
+        }
+    }
+    public function updateSchoolLogo(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|exists:schools,id',
+                'logo' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 422);
+            } else {
+
+                $response = $this->schoolRepo->UpdateSchoolLogo($request);
+                if ($response) {
+                    return response()->json([
+                        'message' => 'updated',
+                        'status' => 200
+                    ], 200);
+                } else {
+                    return response()->json([
+                        "message" => "Error updating logo",
+                    ], 406);
+                }
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error' . $e->getMessage()], 500);
         }
     }
 
