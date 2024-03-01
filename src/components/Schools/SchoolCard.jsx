@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import hologoLogo from "../assets/Hologo_logo.png";
-import { base_URL } from "../../api/SchoolAPI";
+import { s3base_URL } from "../../App";
+import { base_URL } from "../../App";
 const SchoolCard = ({ school, editClicked }) => {
   const [remaining, setRemaining] = useState(0);
   const [logo, setLogo] = useState("");
@@ -49,7 +50,13 @@ const SchoolCard = ({ school, editClicked }) => {
 
         <div className="my-4 flex items-center">
           <div className=" w-36 h-36">
-            <img class="rounded w-36 h-36" src={logo} />
+            <img
+              class="rounded w-36 h-36"
+              src={`${s3base_URL}${school.logo}`}
+              onError={(e) => {
+                e.target.src = hologoLogo;
+              }}
+            />
           </div>
           <div className="px-2 text-xs text-gray-600">
             <div className="m-2">
@@ -87,7 +94,7 @@ const SchoolCard = ({ school, editClicked }) => {
         <div className="">
           <span className="text-gray-500 text-sm">Subscription</span>
           <span className="float-right text-sm text-gray-400">
-            expire on {school.subscription_expiry}
+            expires on {school.subscription_expiry}
           </span>
           <div className="h-2 overflow-hidden rounded-full bg-gray-300">
             <div

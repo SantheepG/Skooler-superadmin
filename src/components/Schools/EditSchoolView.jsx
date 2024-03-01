@@ -5,7 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import ColorPicker from "./ColorPicker";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { base_URL } from "../../api/SchoolAPI";
+import { base_URL } from "../../App";
+import { s3base_URL } from "../../App";
 import {
   UpdateExpiry,
   UpdateUI,
@@ -17,12 +18,10 @@ import {
 } from "../../api/SchoolAPI";
 import DeleteView from "./DeleteView";
 const EditSchoolView = ({ school, close, reload }) => {
-  const MAX_WIDTH = 200;
-  const MAX_HEIGHT = 200;
   const fileInputRef = useRef(null);
   const [logo, setLogo] = useState(null);
 
-  const [logoPreview, setLogoPreview] = useState("");
+  const [logoPreview, setLogoPreview] = useState(hologoLogo);
   const [expiry, setExpiry] = useState("");
   const [ui, setUI] = useState([]);
   const [UIChange, setUIChange] = useState({
@@ -42,6 +41,7 @@ const EditSchoolView = ({ school, close, reload }) => {
   const [editSchool, setEditSchool] = useState(false);
   const [editUI, setEditUI] = useState(false);
   const [editAdmin, setEditAdmin] = useState(false);
+  const [logoUploadClicked, setlogoUploadClicked] = useState(false);
   const [deleteClicked, setDeleteClicked] = useState(false);
   useEffect(() => {
     setUI(JSON.parse(school.ui));
@@ -81,94 +81,43 @@ const EditSchoolView = ({ school, close, reload }) => {
   };
 
   const handleFileChange = async (event) => {
+    setlogoUploadClicked(true);
     event.preventDefault();
     const selectedFile = event.target.files[0];
     setLogo(selectedFile);
-    // Create a FileReader to read the selected file
-    const reader = new FileReader();
 
-    reader.onloadend = () => {
-      // Set the preview URL
-
-      // Create an Image element to get the natural dimensions of the image
-      const image = new Image();
-      image.src = reader.result;
-
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        let width = image.width;
-        let height = image.height;
-        const MAX_WIDTH = 300; // Set your desired maximum width
-        const MAX_HEIGHT = 300; // Set your desired maximum height
-
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        ctx.drawImage(image, 0, 0, width, height);
-
-        // Append the canvas to the DOM or use the canvas to generate a data URL
-        // Example: document.body.appendChild(canvas);
-        // Or: const canvasDataURL = canvas.toDataURL("image/jpeg");
+    const img = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result);
       };
-    };
+      reader.readAsDataURL(selectedFile);
+    });
+    img.then((result) => {
+      setLogoPreview(result);
+    });
 
-    if (selectedFile) {
-      reader.readAsDataURL(selectedFile); // Read the file as a data URL
-    }
     try {
       const formData = new FormData();
       //formData.append("_method", "PUT");
-      formData.append("id", String(school.logo_id));
+      formData.append("id", String(school.id));
       formData.append("logo", event.target.files[0]);
       const response = await UpdateLogo(formData);
 
       if (response.status === 200) {
         toast.success("Updated");
-
+        setlogoUploadClicked(false);
         setTimeout(() => {
           reload();
-          setLogoPreview(reader.result);
+          setEditUI(false);
         }, 500);
       } else {
         toast.error("Something went wrong");
+        setlogoUploadClicked(false);
       }
     } catch (error) {
       console.error("Error:", error.message);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!logo) {
-      return;
-    }
-    try {
-      const formData = new FormData();
-      formData.append("id", school.id);
-      formData.append("logo", logo);
-      const response = UpdateLogo(formData);
-
-      if (response.status === 200) {
-        toast.success("Updated");
-        setTimeout(() => {
-          reload();
-        }, 500);
-      } else {
-        toast.error("Something went wrong");
-      }
-    } catch (error) {
-      console.error("Error:", error.message);
+      setlogoUploadClicked(false);
     }
   };
 
@@ -864,15 +813,37 @@ const EditSchoolView = ({ school, close, reload }) => {
                     <div className="flex sm:col-span-4 w-36 h-36">
                       <img
                         className="border rounded w-36 h-36"
-                        src={logoPreview}
+                        src={`${s3base_URL}${school.logo}`}
                         alt="School logo"
+                        onError={(e) => {
+                          e.target.src = hologoLogo;
+                        }}
                       />
                       <div>
                         <button
                           className="ml-6 border my-16 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
                           onClick={handleUpdateClick}
                         >
-                          Change
+                          <svg
+                            aria-hidden="true"
+                            role="status"
+                            className={`${
+                              logoUploadClicked ? "inline" : "hidden"
+                            } w-4 h-4 me-3 text-gray-200 animate-spin dark:text-gray-600`}
+                            viewBox="0 0 100 101"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                              fill="currentColor"
+                            />
+                            <path
+                              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                              fill="#1C64F2"
+                            />
+                          </svg>
+                          {logoUploadClicked ? "Please wait" : "Change"}
                         </button>
                         <input
                           type="file"

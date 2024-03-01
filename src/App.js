@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Main from "./components/Main";
 import Login from "./components/Login/Login";
 
+export const base_URL = "http://127.0.0.1:8080/api";
+export const s3base_URL = "https://skooler.s3.amazonaws.com/";
 function App() {
   return (
     <Router>

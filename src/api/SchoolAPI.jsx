@@ -1,7 +1,14 @@
 import axios from "axios";
+import { base_URL } from "../App";
 
-export const base_URL = "http://127.0.0.1:8080/api";
-
+export const CheckID = async (schoolId) => {
+  try {
+    const response = await axios.get(`${base_URL}/super/checkid/${schoolId}`);
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 export const AddSchool = async (data) => {
   try {
     const response = await axios.post(`${base_URL}/super/store`, data, {

@@ -5,12 +5,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import ColorPicker from "./ColorPicker";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AddLogo, AddSchool } from "../../api/SchoolAPI";
+import { AddLogo, AddSchool, CheckID } from "../../api/SchoolAPI";
 const AddSchoolView = ({ closeModal, reload }) => {
   const fileInputRef = useRef(null);
-  const [logo, setLogo] = useState(hologoLogo);
-  const MAX_WIDTH = 200;
-  const MAX_HEIGHT = 200;
+  const [addSchoolClicked, setAddSchoolClicked] = useState(false);
+  const [logo, setLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(hologoLogo);
   const [enterSchoolDetailsClicked, setEnterSchoolDetailsClicked] =
     useState(true);
@@ -21,21 +20,22 @@ const AddSchoolView = ({ closeModal, reload }) => {
   const [selectedDateStr, setSelectedDateStr] = useState("");
   const [hour, setHour] = useState("");
   const [mins, setMins] = useState("");
+  const [path, setPath] = useState(null);
   const [schoolDetails, setSchoolDetails] = useState({
     id: "",
     name: "",
-    email: "",
-    phone: "",
     address: "",
     country: "",
     currency: "",
+    phone: "",
+    email: "",
+    ui: "",
+    is_active: true,
     subscription_expiry: "",
-
     delivery: false,
     pickup: false,
     admin: "",
-    ui: "",
-    logo_id: "",
+    logo: "",
   });
 
   const [uiDetails, setUiDetails] = useState({
@@ -67,71 +67,23 @@ const AddSchoolView = ({ closeModal, reload }) => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = async (event) => {
+  const handleFileChange = (event) => {
     event.preventDefault();
     const selectedFile = event.target.files[0];
 
     setLogo(selectedFile);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
 
-    const image = new Image();
-    image.src = URL.createObjectURL(selectedFile);
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // Set the preview URL
-
-      // Create an Image element to get the natural dimensions of the image
-      const image = new Image();
-      image.src = reader.result;
-
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        let width = image.width;
-        let height = image.height;
-        const MAX_WIDTH = 300; // Set your desired maximum width
-        const MAX_HEIGHT = 300; // Set your desired maximum height
-
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        ctx.drawImage(image, 0, 0, width, height);
-
-        // Append the canvas to the DOM or use the canvas to generate a data URL
-        // Example: document.body.appendChild(canvas);
-        // Or: const canvasDataURL = canvas.toDataURL("image/jpeg");
+    const img = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result);
       };
-    };
-    if (selectedFile) {
-      reader.readAsDataURL(selectedFile); // Read the file as a data URL
-    }
-    try {
-      const formData = new FormData();
-      formData.append("_method", "POST");
-      formData.append("logo", event.target.files[0]);
-      const response = await AddLogo(formData);
-      if (response.status === 201) {
-        setSchoolDetails({ ...schoolDetails, logo_id: response.data.logo_id });
-        setLogoPreview(reader.result);
-      } else {
-        toast.error("Something went wrong");
-      }
-    } catch (error) {
-      console.error("Error:", error.message);
-    }
+      reader.readAsDataURL(selectedFile);
+    });
+
+    img.then((result) => {
+      setLogoPreview(result);
+    });
   };
 
   useEffect(() => {
@@ -150,7 +102,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
     setSelectedDateStr(formattedDate(selectedDate));
   }, [selectedDate]);
 
-  const handlefirstClick = () => {
+  const handlefirstClick = async () => {
     setSchoolDetails((prevDetails) => ({
       ...prevDetails,
       subscription_expiry: `${selectedDateStr} ${hour}:${mins}:00`,
@@ -168,17 +120,29 @@ const AddSchoolView = ({ closeModal, reload }) => {
       hour !== "" &&
       mins !== ""
     ) {
-      setEnterUIDetailsClicked(true);
-      setEnterAdminDetailsClicked(false);
-      setEnterSchoolDetailsClicked(false);
-      console.log(schoolDetails);
+      try {
+        const response = await CheckID(schoolDetails.id);
+        if (response.available) {
+          setEnterUIDetailsClicked(true);
+          setEnterAdminDetailsClicked(false);
+          setEnterSchoolDetailsClicked(false);
+        } else {
+          toast.error("A school is already registered with the same ID.");
+        }
+      } catch (error) {
+        toast.error("Something went wrong. Please try again");
+      }
     } else {
       toast.error("Required fields are empty");
     }
   };
 
   const handleSecondClick = () => {
-    if (uiDetails.primary_clr !== "" && uiDetails.secondary_clr) {
+    if (
+      uiDetails.primary_clr !== "" &&
+      uiDetails.secondary_clr &&
+      logo !== null
+    ) {
       setSchoolDetails((prevDetails) => ({
         ...prevDetails,
         ui: JSON.stringify(uiDetails),
@@ -216,37 +180,93 @@ const AddSchoolView = ({ closeModal, reload }) => {
       setMins(formattedMin);
     }
   };
-  const handleSubmit = () => {
-    if (
-      adminDetails.last_name !== "" &&
-      adminDetails.first_name !== "" &&
-      adminDetails.email !== "" &&
-      adminDetails.mobile_no !== "" &&
-      adminDetails.password !== ""
-    ) {
-      setSchoolDetails((prevDetails) => ({
-        ...prevDetails,
-        admin: JSON.stringify(adminDetails),
-      }));
 
-      setTimeout(() => {
-        addSchool();
-      }, 500);
-    } else {
-      toast.error("Required fields are empty");
+  const handleLogoUpload = async () => {
+    setAddSchoolClicked(true);
+    try {
+      if (
+        adminDetails.last_name !== "" &&
+        adminDetails.first_name !== "" &&
+        adminDetails.email !== "" &&
+        adminDetails.mobile_no !== "" &&
+        adminDetails.password !== ""
+      ) {
+        let admin = JSON.stringify(adminDetails);
+        //setSchoolDetails((prevDetails) => ({
+        //  ...prevDetails,
+        //  admin: JSON.stringify(adminDetails),
+        //}));
+        if (logo) {
+          const formData = new FormData();
+          formData.append("_method", "POST");
+          formData.append("logo", logo);
+          const response = await AddLogo(formData);
+          if (response.status === 201) {
+            //setPath(response.data.logo);
+            //setSchoolDetails((prevDetails) => ({
+            //  ...prevDetails,
+            //  logo: response.data.logo,
+            //}));
+            //setLogoPreview(reader.result);
+            console.log(response.data.path);
+            addSchool(response.data.path, admin);
+          } else {
+            toast.error("Something went wrong");
+            setAddSchoolClicked(false);
+          }
+        } else {
+          toast.error("Add a logo to continue");
+          setAddSchoolClicked(false);
+        }
+      } else {
+        toast.error("Required fields are empty");
+        setAddSchoolClicked(false);
+      }
+    } catch (error) {
+      console.error("Error:", error.message);
+      setAddSchoolClicked(false);
     }
   };
-  const addSchool = async () => {
-    const response = await AddSchool(schoolDetails);
-    if (response.status === 201) {
-      toast.success("School added");
-      setTimeout(() => {
-        closeModal();
-        reload();
-      }, 1300);
-    } else {
-      toast.error("Something went wrong");
-      console.log(logo);
+
+  const addSchool = async (path, admin) => {
+    try {
+      if (admin && path) {
+        let data = {
+          id: schoolDetails.id,
+          name: schoolDetails.name,
+          address: schoolDetails.address,
+          country: schoolDetails.country,
+          currency: schoolDetails.currency,
+          phone: schoolDetails.phone,
+          email: schoolDetails.email,
+          ui: schoolDetails.ui,
+          is_active: true,
+          subscription_expiry: schoolDetails.subscription_expiry,
+          delivery: schoolDetails.delivery,
+          pickup: schoolDetails.pickup,
+          admin: admin,
+          logo: path,
+        };
+        const response = await AddSchool(data);
+        if (response.status === 201) {
+          toast.success("School added");
+          setAddSchoolClicked(false);
+          setTimeout(() => {
+            closeModal();
+            reload();
+          }, 1300);
+        } else {
+          toast.error("Something went wrong");
+          setAddSchoolClicked(false);
+        }
+      } else {
+        toast.error("Required fields are empty");
+        setAddSchoolClicked(false);
+        console.log(admin, " ", path);
+      }
+    } catch (error) {
+      console.log(error);
+      setAddSchoolClicked(false);
     }
   };
   return (
@@ -587,7 +607,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
                   </button>
                   <button
                     type="button"
-                    class="w-full sm:w-auto justify-center text-white inline-flex bg-blue-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                    class="py-2.5 px-5 me-2 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-1 focus:outline-none focus:ring-gray-700 focus:text-gray-500 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 inline-flex items-center"
                     onClick={handlefirstClick}
                   >
                     Next
@@ -684,7 +704,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
                   </button>
                   <button
                     type="button"
-                    class="w-full sm:w-auto justify-center text-white inline-flex bg-blue-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                    class="py-2.5 px-5 me-2 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-1 focus:outline-none focus:ring-gray-700 focus:text-gray-500 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 inline-flex items-center"
                     onClick={handleSecondClick}
                   >
                     Next
@@ -837,10 +857,29 @@ const AddSchoolView = ({ closeModal, reload }) => {
                   </button>
                   <button
                     type="button"
-                    class="w-full sm:w-auto justify-center text-white inline-flex bg-blue-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    onClick={handleSubmit}
+                    class="py-2.5 px-5 me-2 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-1 focus:outline-none focus:ring-gray-700 focus:text-gray-500 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 inline-flex items-center"
+                    onClick={handleLogoUpload}
                   >
-                    Add
+                    <svg
+                      aria-hidden="true"
+                      role="status"
+                      className={`${
+                        addSchoolClicked ? "inline" : "hidden"
+                      } w-4 h-4 me-3 text-gray-200 animate-spin dark:text-gray-600`}
+                      viewBox="0 0 100 101"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                        fill="#1C64F2"
+                      />
+                    </svg>
+                    {addSchoolClicked ? "Please wait" : "Add product"}
                   </button>
                 </div>
               </div>
