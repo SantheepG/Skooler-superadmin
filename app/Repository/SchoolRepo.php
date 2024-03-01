@@ -14,7 +14,6 @@ class SchoolRepo implements ISchoolRepo
     {
         return School::all();
     }
-
     // Storing a new school
     public function store($schoolData)
     {
@@ -43,7 +42,7 @@ class SchoolRepo implements ISchoolRepo
 
         return $school;
     }
-
+    //will be saved in s3 bucket
     public function AddSchoolLogo(Request $request)
     {
         $path = $request->file('logo')->store(
@@ -61,6 +60,7 @@ class SchoolRepo implements ISchoolRepo
     public function UpdateSchoolLogo(Request $request)
     {
         $school = School::find($request->input('id'));
+        //Checking for the existence. If logo is already available, existing one will be deleted
         if ($school->logo) {
             Storage::disk('s3')->delete($school->logo);
         }
@@ -78,12 +78,6 @@ class SchoolRepo implements ISchoolRepo
             return false;
         }
     }
-
-    public function addLogo($img)
-    {
-        return Sample::create($img);
-    }
-
     public function updateUI($ui, $id)
     {
         try {
@@ -161,17 +155,6 @@ class SchoolRepo implements ISchoolRepo
             return "School with ID $id deleted successfully.";
         } catch (\Exception $e) {
             return "Error: " . $e->getMessage();
-        }
-    }
-    public function updateLogo($logo, $id)
-    {
-        try {
-            $school = School::findOrFail($id);
-            $school->logo = $logo;
-            $school->save();
-            return true;
-        } catch (\Exception $e) {
-            return $e;
         }
     }
 }

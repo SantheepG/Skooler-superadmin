@@ -17,7 +17,7 @@ class SchoolController extends Controller
         $this->schoolRepo = $schoolRepo;
     }
 
-    public function index()
+    public function getSchools()
     {
         $schools = $this->schoolRepo->all();
         return response()->json([
@@ -150,31 +150,6 @@ class SchoolController extends Controller
         }
     }
 
-    public function updateLogo(Request $request)
-    {
-        try {
-            $request->validate([
-                'id' => 'required|exists:schools,id',
-                'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json(['errors' => $e->validator->errors()], 422);
-        }
-
-        $id = $request->input('id');
-        $logo = file_get_contents($request->file('logo')->path());
-
-        $response = $this->schoolRepo->updateLogo($logo, $id);
-        if ($response) {
-            return response()->json([
-                'message' => 'updated',
-                'status' => 200
-            ], 200);
-        } else {
-            return response()->json(["error" => "couldn't update", 'response' => $response], 404);
-        }
-    }
     public function updateUI(Request $request)
     {
         try {
@@ -323,66 +298,5 @@ class SchoolController extends Controller
         } else {
             return response()->json(["error" => "No School Found"], 404);
         }
-    }
-
-    public function addSample(Request $request)
-    {
-        // Validate the request data
-        $request->validate([
-            'img' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust validation rules as needed
-        ]);
-
-        // Process the image and convert it to binary data
-        $imageBinary = file_get_contents($request->file('img')->path());
-
-        // Create a new Sample model instance
-        $sample = new Sample();
-        $sample->img = $imageBinary;
-
-        // Save the record to the database
-        $sample->save();
-
-        return "Sample record added successfully.";
-    }
-
-    public function getSampleImage($id)
-    {
-        $sample = Sample::find($id);
-
-        if (!$sample) {
-            return response()->json(['message' => 'Sample not found'], 404);
-        }
-
-        $image = $sample->img;
-
-
-        return response($image)->header('Content-Type', 'image/jpeg');
-    }
-    public function updateSample(Request $request)
-    {
-        // Validate the request data
-        $request->validate([
-            'id' => 'required|exists:sample,id',
-            'img' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust validation rules as needed
-        ]);
-
-        // Process the image and convert it to binary data
-        $imageBinary = file_get_contents($request->file('img')->path());
-        $id = $request->file('id');
-        // Create a new Sample model instance
-        $sample = Sample::find($id);
-
-
-        if ($sample) {
-            $sample->img = $imageBinary;
-            $sample->save();
-            // School with the specified ID was found
-            // You can now use the $school object for further operations
-        } else {
-            // School with the specified ID was not found
-        }
-
-
-        return "Sample record added successfully.";
     }
 }
