@@ -22,10 +22,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('super/fetch', [SchoolController::class, 'getSchools']);
 Route::post('super/store', [SchoolController::class, 'addSchool']);
-Route::post('super/checkid/{id}', [SchoolController::class, 'checkSchoolId']);
+Route::get('super/checkid/{id}', [SchoolController::class, 'checkSchoolId']);
 
 Route::get('super/getschool/{id}', [SchoolController::class, 'fetchSchool']);
-Route::get('super/checkid/{id}', [SchoolController::class, 'checkID']);
+
 Route::put('super/school/updateui', [SchoolController::class, 'updateUI']);
 Route::put('super/school/updatestatus', [SchoolController::class, 'updateStatus']);
 Route::put('super/school/updateexpiry', [SchoolController::class, 'updateExpiry']);

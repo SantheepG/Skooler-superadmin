@@ -33,7 +33,7 @@ class SchoolController extends Controller
             return response()->json([
                 'available' => true,
                 'status' => 200
-            ], 201);
+            ], 200);
         } else {
             return response()->json([
                 'available' => false,
