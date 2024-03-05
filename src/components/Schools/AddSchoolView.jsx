@@ -6,11 +6,15 @@ import ColorPicker from "./ColorPicker";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AddLogo, AddSchool, CheckID } from "../../api/SchoolAPI";
+import { Countries } from "../../api/Countries";
 const AddSchoolView = ({ closeModal, reload }) => {
+  const [selectedCountry, setSelectedCountry] = useState("Country");
+  const [countriesToView, setCountriesToView] = useState([]);
   const fileInputRef = useRef(null);
   const [addSchoolClicked, setAddSchoolClicked] = useState(false);
   const [logo, setLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(hologoLogo);
+  const [viewCountryDropdown, setViewCountryDropdown] = useState(false);
   const [enterSchoolDetailsClicked, setEnterSchoolDetailsClicked] =
     useState(true);
   const [enterUIDetailsClicked, setEnterUIDetailsClicked] = useState(false);
@@ -20,7 +24,6 @@ const AddSchoolView = ({ closeModal, reload }) => {
   const [selectedDateStr, setSelectedDateStr] = useState("");
   const [hour, setHour] = useState("");
   const [mins, setMins] = useState("");
-  const [path, setPath] = useState(null);
   const [schoolDetails, setSchoolDetails] = useState({
     id: "",
     name: "",
@@ -37,6 +40,10 @@ const AddSchoolView = ({ closeModal, reload }) => {
     admin: "",
     logo: "",
   });
+
+  useEffect(() => {
+    setCountriesToView(Object.keys(Countries));
+  }, []);
 
   const [uiDetails, setUiDetails] = useState({
     primary_clr: "",
@@ -62,6 +69,35 @@ const AddSchoolView = ({ closeModal, reload }) => {
     profile_pic: null,
   });
 
+  const searchCountry = (event) => {
+    event.preventDefault();
+    const inputValue = event.target.value.toLowerCase();
+
+    if (inputValue === "") {
+      setCountriesToView(Object.keys(Countries));
+    } else {
+      let matchedCountries = Object.keys(Countries).filter((key) =>
+        key.toLowerCase().includes(inputValue)
+      );
+      setCountriesToView(matchedCountries);
+    }
+  };
+  const handleCountryChange = (country) => {
+    let countryCode = "";
+    for (const [key, value] of Object.entries(Countries)) {
+      if (key.toLowerCase() === country.toLowerCase()) {
+        countryCode = value;
+        break;
+      }
+    }
+    setSchoolDetails({
+      ...schoolDetails,
+      country: countryCode,
+    });
+    setSelectedCountry(country);
+    setViewCountryDropdown(false);
+    console.log(countryCode);
+  };
   const handleUpdateClick = (event) => {
     event.preventDefault();
     fileInputRef.current.click();
@@ -122,7 +158,9 @@ const AddSchoolView = ({ closeModal, reload }) => {
     ) {
       try {
         const response = await CheckID(schoolDetails.id);
-        if (response.available) {
+        console.log(response.data.available);
+        if (response.data.available === true) {
+          console.log();
           setEnterUIDetailsClicked(true);
           setEnterAdminDetailsClicked(false);
           setEnterSchoolDetailsClicked(false);
@@ -392,11 +430,66 @@ const AddSchoolView = ({ closeModal, reload }) => {
                           Country
                           <span className="required text-red-500"> *</span>
                         </label>
+                        <div class="flex items-center justify-center">
+                          <div class="relative">
+                            <button
+                              type="button"
+                              className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
+                              onClick={() =>
+                                setViewCountryDropdown(!viewCountryDropdown)
+                              }
+                            >
+                              <span class="mr-2 w-36 max-w-36">
+                                {selectedCountry}
+                              </span>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-5 h-5 ml-2 -mr-1"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            </button>
+                            <div
+                              class={`${
+                                viewCountryDropdown ? "fixed" : "hidden"
+                              }  z-index-50 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-1 space-y-1`}
+                            >
+                              <input
+                                id="searchcountry"
+                                class="block w-full px-4 py-2 text-gray-800 border rounded-md  border-gray-300 focus:outline-none"
+                                type="text"
+                                placeholder="Search"
+                                onChange={(e) => searchCountry(e)}
+                              />
+                              <div className="overflow-y-auto h-32">
+                                {countriesToView.map((country, index) => (
+                                  <div
+                                    key={index}
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md"
+                                    onClick={(e) => {
+                                      handleCountryChange(country);
+                                      e.preventDefault();
+                                    }}
+                                  >
+                                    {country}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <input
                           type="text"
                           name="name"
                           id="name"
-                          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                          class="bg-gray-50 hidden border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                           required=""
                           value={schoolDetails.country}
                           onChange={(e) => {
@@ -879,7 +972,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
                         fill="#1C64F2"
                       />
                     </svg>
-                    {addSchoolClicked ? "Please wait" : "Add product"}
+                    {addSchoolClicked ? "Please wait" : "Add school"}
                   </button>
                 </div>
               </div>
