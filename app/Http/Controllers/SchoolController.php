@@ -6,7 +6,6 @@ use App\Repository\ISchoolRepo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Sample;
 
 class SchoolController extends Controller
 {
