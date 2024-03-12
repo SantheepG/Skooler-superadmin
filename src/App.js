@@ -4,7 +4,7 @@ import Main from "./components/Main";
 import Login from "./components/Login/Login";
 
 export const base_URL = "http://127.0.0.1:8080/api";
-export const s3base_URL = "https://skooler.s3.amazonaws.com/";
+export const s3base_URL = "https://skoolers3.s3.amazonaws.com/";
 function App() {
   return (
     <Router>
