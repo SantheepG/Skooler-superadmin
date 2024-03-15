@@ -219,6 +219,7 @@ const EditSchoolView = ({ school, close, reload }) => {
       schoolDetails.email !== "" &&
       schoolDetails.phone !== "" &&
       schoolDetails.country !== "" &&
+      schoolDetails.country_code !== "" &&
       schoolDetails.currency !== ""
     ) {
       const response = await UpdateInfo({
@@ -228,6 +229,7 @@ const EditSchoolView = ({ school, close, reload }) => {
         email: schoolDetails.email,
         phone: schoolDetails.phone,
         country: schoolDetails.country,
+        country_code: schoolDetails.country_code,
         currency: schoolDetails.currency,
         pickup: schoolDetails.pickup,
         delivery: schoolDetails.delivery,
@@ -524,6 +526,11 @@ const EditSchoolView = ({ school, close, reload }) => {
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <p class="text-gray-600">
+                Country code : <strong>{schoolDetails.country_code}</strong>
+              </p>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-gray-600">
                 Currency : <strong>{schoolDetails.currency}</strong>
               </p>
             </div>
@@ -804,9 +811,32 @@ const EditSchoolView = ({ school, close, reload }) => {
                       </span>
                     </label>
                   </div>
-                  <div>
+                  <div className="flex mt-5 ">
+                    <div className="w-1/2">
+                      <label
+                        for="name"
+                        class="block mb-2  text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Country code
+                        <span className="required text-red-500"> *</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        required=""
+                        value={schoolDetails.country_code}
+                        onChange={(e) => {
+                          setSchoolDetails({
+                            ...schoolDetails,
+                            country_code: e.target.value,
+                          });
+                        }}
+                      />
+                    </div>
                     <button
-                      className="ml-6 border my-16 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
+                      className="border mt-8 mx-6 px-4 py-2 rounded-xl text-xs text-gray-600 hover:text-gray-900"
                       onClick={updateInfo}
                     >
                       update
