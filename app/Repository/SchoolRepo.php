@@ -111,7 +111,7 @@ class SchoolRepo implements ISchoolRepo
             return false;
         }
     }
-    public function updateInfo($id, $name, $address,  $email,  $phone, $country,  $currency, $delivery, $pickup)
+    public function updateInfo($id, $name, $address,  $email,  $phone, $country, $country_code, $currency, $delivery, $pickup)
     {
         try {
             $school = School::findOrFail($id);
@@ -120,6 +120,7 @@ class SchoolRepo implements ISchoolRepo
             $school->email = $email;
             $school->phone = $phone;
             $school->country = $country;
+            $school->country_code = $country_code;
             $school->currency = $currency;
             $school->delivery = $delivery;
             $school->pickup = $pickup;

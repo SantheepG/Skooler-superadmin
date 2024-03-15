@@ -12,7 +12,7 @@ interface ISchoolRepo
     public function updateUI($ui, $id);
     public function updateStatus($is_active, $id);
     public function updateExpiry($subscription_expiry, $id);
-    public function updateInfo($id, $name, $address,  $email,  $phone, $country,  $currency, $delivery, $pickup);
+    public function updateInfo($id, $name, $address,  $email,  $phone, $country, $country_code,  $currency, $delivery, $pickup);
     public function updateAdmin($admin, $id);
     public function deleteSchool($id);
     public function AddSchoolLogo(Request $request);

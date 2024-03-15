@@ -17,6 +17,7 @@ class School extends Model
         'name',
         'address',
         'country',
+        'country_code',
         'currency',
         'phone',
         'email',

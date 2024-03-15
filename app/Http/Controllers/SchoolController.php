@@ -49,6 +49,7 @@ class SchoolController extends Controller
                 'name' => 'required|string',
                 'address' => 'required|string',
                 'country' => 'required|string',
+                'country_code' => 'required|string',
                 'currency' => 'required|string',
                 'phone' => 'required|string',
                 'email' => 'required|email',
@@ -233,6 +234,7 @@ class SchoolController extends Controller
                 'email' => 'required|email',
                 'phone' => 'required|string',
                 'country' => 'required|string',
+                'country_code' => 'required|string',
                 'currency' => 'required|string',
                 'delivery' => 'required|boolean',
                 'pickup' => 'required|boolean',
@@ -248,10 +250,11 @@ class SchoolController extends Controller
         $email = $request->input('email');
         $phone = $request->input('phone');
         $country = $request->input('country');
+        $country_code = $request->input('country_code');
         $currency = $request->input('currency');
         $delivery = $request->input('delivery');
         $pickup = $request->input('pickup');
-        $response = $this->schoolRepo->updateInfo($id, $name, $address,  $email,  $phone, $country,  $currency, $delivery, $pickup);
+        $response = $this->schoolRepo->updateInfo($id, $name, $address,  $email,  $phone, $country, $country_code,  $currency, $delivery, $pickup);
         if ($response) {
             return response()->json([
                 'message' => 'updated',
