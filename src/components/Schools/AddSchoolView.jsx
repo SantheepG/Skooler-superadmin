@@ -795,6 +795,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
                             ref={fileInputRef}
                             style={{ display: "none" }}
                             onChange={handleFileChange}
+                            accept="image/*"
                           />
                         </div>
                       </div>

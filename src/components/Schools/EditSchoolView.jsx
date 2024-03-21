@@ -969,6 +969,7 @@ const EditSchoolView = ({ school, close, reload }) => {
                           ref={fileInputRef}
                           style={{ display: "none" }}
                           onChange={handleFileChange}
+                          accept="image/*"
                         />
                       </div>
                     </div>
