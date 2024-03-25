@@ -152,6 +152,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
       schoolDetails.phone !== "" &&
       schoolDetails.address !== "" &&
       schoolDetails.country !== "" &&
+      schoolDetails.country_code !== "" &&
       schoolDetails.currency !== "" &&
       selectedDateStr !== "" &&
       hour !== "" &&
@@ -275,6 +276,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
           name: schoolDetails.name,
           address: schoolDetails.address,
           country: schoolDetails.country,
+          country_code: schoolDetails.country_code,
           currency: schoolDetails.currency,
           phone: schoolDetails.phone,
           email: schoolDetails.email,
