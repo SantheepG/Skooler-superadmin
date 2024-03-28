@@ -7,6 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AddLogo, AddSchool, CheckID } from "../../api/SchoolAPI";
 import { Countries } from "../../api/Countries";
+import { imgFormats } from "../../App";
 const AddSchoolView = ({ closeModal, reload }) => {
   const [selectedCountry, setSelectedCountry] = useState("Country");
   const [countriesToView, setCountriesToView] = useState([]);
@@ -107,20 +108,24 @@ const AddSchoolView = ({ closeModal, reload }) => {
   const handleFileChange = (event) => {
     event.preventDefault();
     const selectedFile = event.target.files[0];
+    const fileExtension = selectedFile.name.split(".").pop().toLowerCase();
+    if (imgFormats.includes(fileExtension)) {
+      setLogo(selectedFile);
 
-    setLogo(selectedFile);
+      const img = new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+        reader.readAsDataURL(selectedFile);
+      });
 
-    const img = new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result);
-      };
-      reader.readAsDataURL(selectedFile);
-    });
-
-    img.then((result) => {
-      setLogoPreview(result);
-    });
+      img.then((result) => {
+        setLogoPreview(result);
+      });
+    } else {
+      toast.error("Invalid image");
+    }
   };
 
   useEffect(() => {
@@ -152,6 +157,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
       schoolDetails.phone !== "" &&
       schoolDetails.address !== "" &&
       schoolDetails.country !== "" &&
+      schoolDetails.country_code !== "" &&
       schoolDetails.currency !== "" &&
       selectedDateStr !== "" &&
       hour !== "" &&
@@ -275,6 +281,7 @@ const AddSchoolView = ({ closeModal, reload }) => {
           name: schoolDetails.name,
           address: schoolDetails.address,
           country: schoolDetails.country,
+          country_code: schoolDetails.country_code,
           currency: schoolDetails.currency,
           phone: schoolDetails.phone,
           email: schoolDetails.email,
