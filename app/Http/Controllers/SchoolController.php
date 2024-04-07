@@ -91,7 +91,7 @@ class SchoolController extends Controller
                 'status' => 200
             ], 200);
         } else {
-            return response()->json(["error" => "No School Found"], 404);
+            return response()->json(["message" => "Unauthorized access", 'status' => 401], 401);
         }
     }
 

@@ -34,13 +34,14 @@ class SchoolRepo implements ISchoolRepo
         // Checking if subscription_expiry is in the past
         $currentDateTime = now();  // Current date & time
 
-        if ($currentDateTime > $school->subscription_expiry) {
-            // Subscription has expired, update is_active to false
+        if (($currentDateTime > $school->subscription_expiry) || !($school->is_active)) {
+            // Subscription expired, update is_active to false
             $school->is_active = false;
             $school->save();
+            return null;
+        } else {
+            return $school;
         }
-
-        return $school;
     }
     //will be saved in s3 bucket
     public function AddSchoolLogo(Request $request)
